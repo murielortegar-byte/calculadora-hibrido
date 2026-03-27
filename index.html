@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ahorro Híbrido">
+<meta name="theme-color" content="#D81E1E">
+<title>Calculadora de Ahorro Híbrido · ONE Summit</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --rojo:        #D81E1E;
+    --rojo-dark:   #b01515;
+    --rojo-soft:   rgba(216,30,30,0.08);
+    --rojo-border: rgba(216,30,30,0.2);
+    --negro:       #1A1A1A;
+    --gris-oscuro: #444444;
+    --gris:        #777777;
+    --gris-med:    #999999;
+    --gris-claro:  #CCCCCC;
+    --borde:       #E5E5E5;
+    --borde-dark:  #D0D0D0;
+    --fondo-input: #F8F8F8;
+    --fondo-card:  #FFFFFF;
+    --fondo:       #F3F4F6;
+    --blanco:      #FFFFFF;
+    --verde:       #16a34a;
+    --verde-soft:  rgba(22,163,74,0.1);
+    --oro:         #b45309;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family:'Barlow', sans-serif;
+    background:var(--fondo);
+    color:var(--negro);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .top-bar {
+    background:var(--rojo);
+    padding:7px 20px;
+    font-size:11px; font-weight:700;
+    letter-spacing:1.5px; text-transform:uppercase;
+    color:white; text-align:center;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background:var(--blanco);
+    border-bottom:1px solid var(--borde);
+    padding:0 20px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .header-inner {
+    max-width:980px; margin:0 auto;
+    display:flex; align-items:center; gap:20px;
+    padding:18px 0;
+  }
+
+  .logo-wrap {
+    display:flex; align-items:center; flex-shrink:0;
+  }
+  .logo-wrap img {
+    height:42px; width:auto; display:block;
+    /* Preserve exact logo proportions */
+    object-fit:contain;
+  }
+
+  .header-sep {
+    width:1px; height:40px;
+    background:var(--borde-dark); flex-shrink:0;
+  }
+
+  .header-text h1 {
+    font-family:'Barlow Condensed', sans-serif;
+    font-size:clamp(17px,2.8vw,24px); font-weight:800;
+    letter-spacing:0.3px; text-transform:uppercase;
+    color:var(--negro); line-height:1.15;
+  }
+  .header-text h1 span { color:var(--rojo); }
+  .header-text p { font-size:12.5px; color:var(--gris); margin-top:3px; }
+
+  .badge {
+    margin-left:auto; flex-shrink:0;
+    background:var(--rojo-soft); border:1px solid var(--rojo-border);
+    color:var(--rojo); font-size:10px; font-weight:700;
+    padding:5px 12px; border-radius:4px;
+    letter-spacing:1px; text-transform:uppercase; white-space:nowrap;
+  }
+
+  /* ── MAIN WRAPPER ── */
+  .wrapper { max-width:980px; margin:0 auto; padding:28px 20px 60px; }
+
+  /* ── GRID ── */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media(max-width:640px){ .grid-2 { grid-template-columns:1fr; } }
+
+  /* ── CARD ── */
+  .card {
+    background:var(--fondo-card);
+    border:1px solid var(--borde);
+    border-radius:14px; padding:24px; margin-bottom:18px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.06);
+    transition:box-shadow 0.2s;
+  }
+  .card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.1); }
+
+  .card-title {
+    font-family:'Barlow Condensed', sans-serif;
+    font-size:12.5px; font-weight:800;
+    letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--gris-oscuro);
+    margin-bottom:20px;
+    display:flex; align-items:center; gap:9px;
+    padding-bottom:14px;
+    border-bottom:2px solid var(--borde);
+  }
+  .card-title::before {
+    content:''; width:4px; height:16px;
+    background:var(--rojo); border-radius:2px; flex-shrink:0;
+  }
+
+  /* ── INPUTS ── */
+  .field { margin-bottom:16px; }
+  .field label {
+    display:block; font-size:11.5px; font-weight:700;
+    color:var(--gris-oscuro); margin-bottom:6px;
+    letter-spacing:0.5px; text-transform:uppercase;
+  }
+  .input-wrap { position:relative; display:flex; align-items:center; }
+  .input-prefix,.input-suffix {
+    position:absolute; font-size:13px;
+    color:var(--gris-med); font-weight:600; pointer-events:none;
+    user-select:none;
+  }
+  .input-prefix { left:13px; } .input-suffix { right:13px; }
+
+  input[type="text"], input[type="number"] {
+    width:100%; background:var(--fondo-input);
+    border:1.5px solid var(--borde-dark);
+    border-radius:9px; padding:11px 38px 11px 13px;
+    color:var(--negro); font-family:'Barlow',sans-serif;
+    font-size:15px; font-weight:600; outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance:textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; }
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color:var(--rojo); background:white;
+    box-shadow:0 0 0 3px rgba(216,30,30,0.1);
+  }
+  .has-prefix input { padding-left:28px; }
+
+  /* PRESETS */
+  .presets { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .preset-btn {
+    background:white; border:1.5px solid var(--borde-dark);
+    color:var(--gris-oscuro); font-size:12px; font-weight:700;
+    padding:5px 12px; border-radius:6px; cursor:pointer;
+    transition:all 0.18s; font-family:'Barlow',sans-serif;
+    text-transform:uppercase; letter-spacing:0.4px;
+  }
+  .preset-btn:hover { border-color:var(--rojo); color:var(--rojo); background:var(--rojo-soft); }
+  .preset-btn.active { background:var(--rojo); border-color:var(--rojo); color:white; }
+
+  /* RANGE */
+  input[type="range"] {
+    -webkit-appearance:none; width:100%; height:4px;
+    background:var(--borde); border-radius:2px; outline:none; margin-top:10px;
+    cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background:var(--rojo); cursor:pointer;
+    box-shadow:0 1px 4px rgba(216,30,30,0.4);
+  }
+
+  /* CALC BTN */
+  .calc-btn {
+    width:100%; background:var(--rojo);
+    border:none; border-radius:10px; color:white;
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:18px; font-weight:900;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:16px; cursor:pointer; transition:all 0.22s;
+    margin-top:6px;
+  }
+  .calc-btn:hover {
+    background:var(--rojo-dark);
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(216,30,30,0.35);
+  }
+  .calc-btn:active { transform:translateY(0); box-shadow:none; }
+
+  /* ── RESULTS ── */
+  #results { display:none; }
+  #results.visible { display:block; animation:fadeUp 0.4s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .results-header {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:clamp(16px,2.8vw,22px); font-weight:900;
+    text-transform:uppercase; letter-spacing:1px;
+    color:var(--negro); margin-bottom:18px;
+    display:flex; align-items:center; gap:9px;
+  }
+
+  /* SAVINGS HERO */
+  .savings-hero {
+    background:var(--negro);
+    border-radius:16px; padding:38px 32px;
+    margin-bottom:18px; text-align:center;
+    position:relative; overflow:hidden;
+    box-shadow:0 4px 24px rgba(0,0,0,0.15);
+  }
+  .savings-hero::before {
+    content:''; position:absolute;
+    top:0; left:0; right:0; height:4px;
+    background:var(--rojo);
+  }
+  .savings-hero::after {
+    content:''; position:absolute;
+    inset:0;
+    background:radial-gradient(ellipse 60% 60% at 50% -10%, rgba(216,30,30,0.12) 0%, transparent 70%);
+  }
+  .savings-label {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:11px; letter-spacing:2.5px; text-transform:uppercase;
+    color:rgba(255,255,255,0.5); font-weight:700; margin-bottom:8px;
+    position:relative; z-index:1;
+  }
+  .savings-amount {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:clamp(52px,10vw,82px); font-weight:900;
+    color:white; letter-spacing:-1px; line-height:1;
+    position:relative; z-index:1;
+  }
+  .savings-amount .currency { font-size:0.5em; vertical-align:super; opacity:0.8; }
+  .savings-sub {
+    font-size:13.5px; color:rgba(255,255,255,0.45);
+    margin-top:10px; position:relative; z-index:1;
+  }
+
+  /* STATS */
+  .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px; }
+  @media(max-width:580px){ .stats-grid { grid-template-columns:1fr 1fr; } }
+
+  .stat-card {
+    background:white; border:1.5px solid var(--borde);
+    border-radius:14px; padding:18px 14px; text-align:center;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { border-color:var(--rojo-border); box-shadow:0 4px 12px rgba(216,30,30,0.08); }
+  .stat-icon { font-size:22px; margin-bottom:8px; }
+  .stat-val {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:clamp(20px,3.5vw,28px); font-weight:900;
+    color:var(--negro); letter-spacing:-0.3px;
+  }
+  .stat-desc {
+    font-size:10.5px; color:var(--gris-med); margin-top:4px;
+    line-height:1.4; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.4px;
+  }
+
+  /* HIGHLIGHT STAT */
+  .stat-card.highlight {
+    background:var(--negro); border-color:var(--negro);
+  }
+  .stat-card.highlight .stat-val { color:white; }
+  .stat-card.highlight .stat-desc { color:rgba(255,255,255,0.45); }
+
+  /* TABLE */
+  .proj-table { width:100%; border-collapse:collapse; }
+  .proj-table th {
+    font-size:10px; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--gris); padding:10px 14px; text-align:left;
+    border-bottom:2px solid var(--borde); font-weight:700;
+    background:var(--fondo);
+  }
+  .proj-table th:first-child { border-radius:6px 0 0 0; }
+  .proj-table th:last-child  { border-radius:0 6px 0 0; }
+  .proj-table td {
+    padding:12px 14px; font-size:14px; font-weight:500;
+    border-bottom:1px solid var(--borde);
+  }
+  .proj-table tr:last-child td { border-bottom:none; }
+  .proj-table td:first-child { color:var(--gris-oscuro); font-weight:700; }
+  .proj-table td.col-verde {
+    color:var(--verde); font-weight:900;
+    font-family:'Barlow Condensed',sans-serif; font-size:17px;
+  }
+  .proj-table td.col-rojo { color:var(--rojo); font-weight:600; }
+  .proj-table tr:hover td { background:var(--fondo); }
+
+  /* CHART */
+  .chart-wrap {
+    background:white; border:1.5px solid var(--borde);
+    border-radius:14px; padding:24px; margin-bottom:18px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  /* BARS */
+  .compare-row { display:flex; flex-direction:column; gap:16px; }
+  .bar-label {
+    display:flex; justify-content:space-between;
+    font-size:11.5px; color:var(--gris-oscuro);
+    margin-bottom:7px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.4px;
+  }
+  .bar-track { height:10px; background:var(--fondo); border-radius:5px; overflow:hidden; border:1px solid var(--borde); }
+  .bar-fill { height:100%; border-radius:5px; transition:width 1s cubic-bezier(0.34,1.56,0.64,1); }
+  .bar-fill.gasolina { background:var(--rojo); }
+  .bar-fill.hibrido  { background:var(--verde); }
+
+  /* ROI */
+  .roi-card {
+    background:white; border:1.5px solid #e6c97a;
+    border-left:4px solid var(--oro);
+    border-radius:14px; padding:20px 22px; margin-bottom:18px;
+    display:flex; align-items:center; gap:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  }
+  .roi-icon { font-size:30px; flex-shrink:0; }
+  .roi-title { font-size:11px; color:var(--oro); font-weight:800; letter-spacing:1px; text-transform:uppercase; }
+  .roi-val { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:900; color:var(--negro); margin-top:2px; }
+  .roi-desc { font-size:12px; color:var(--gris); margin-top:3px; }
+
+  /* ACTIONS */
+  .action-row { display:flex; gap:12px; margin-top:8px; }
+  .btn-secondary {
+    flex:1; background:white; border:1.5px solid var(--borde-dark);
+    border-radius:10px; color:var(--gris-oscuro);
+    font-family:'Barlow',sans-serif; font-size:13px; font-weight:700;
+    padding:12px; cursor:pointer; transition:all 0.2s;
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    text-transform:uppercase; letter-spacing:0.5px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.06);
+  }
+  .btn-secondary:hover { border-color:var(--rojo); color:var(--rojo); background:var(--rojo-soft); }
+
+  /* DIVIDER */
+  .divider {
+    height:2px; border:none;
+    background:linear-gradient(to right,transparent,var(--rojo),transparent);
+    margin:28px 0; opacity:0.3;
+  }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    background:white; border:1.5px solid var(--borde);
+    border-left:4px solid var(--negro);
+    border-radius:14px; padding:16px 20px; margin-bottom:18px;
+    display:flex; align-items:center; gap:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  }
+  .install-banner .ib-icon { font-size:26px; flex-shrink:0; }
+  .install-banner .ib-text { flex:1; }
+  .install-banner .ib-title { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:var(--negro); }
+  .install-banner .ib-desc  { font-size:11.5px; color:var(--gris); margin-top:2px; }
+
+  /* FOOTER */
+  footer {
+    text-align:center; padding:24px 0 0;
+    font-size:12px; color:var(--gris-claro);
+    border-top:1px solid var(--borde); margin-top:40px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .footer-logo img { height:28px; width:auto; object-fit:contain; }
+  footer span { color:var(--gris-med); }
+
+  @media print {
+    .top-bar,.calc-btn,.action-row,.badge,.install-banner { display:none !important; }
+    body { background:white; }
+    .card,.chart-wrap,.stat-card,.roi-card { box-shadow:none; border:1px solid #ddd; }
+    .savings-hero { background:#1A1A1A !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+
+  @media(max-width:480px){
+    .header-sep { display:none; }
+    .header-text h1 { font-size:17px; }
+    .badge { display:none; }
+  }
+
+.input-group{ position:relative; }
+.input-group .prefix{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  font-size:14px; color:#666; pointer-events:none;
+}
+.input-group input{ padding-left:32px; }
+@media (max-width:640px){
+  .input-group .prefix{ left:10px; font-size:13px; }
+  .input-group input{ padding-left:34px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="top-bar">Herramienta exclusiva para vendedores ONE Summit</div>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="logo.jpg" alt="ONE Summit"
+        onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<div style=\'font-family:Barlow Condensed,sans-serif;font-weight:900;font-size:22px;color:#1A1A1A;letter-spacing:-0.5px\'><span style=\'color:#D81E1E\'>ONE</span> Summit</div>')">
+    </div>
+    <div class="header-sep"></div>
+    <div class="header-text">
+      <h1>Calculadora de <span>Ahorro</span> Híbrido</h1>
+      <p>Compara el costo real entre un auto convencional y uno híbrido</p>
+    </div>
+    <div class="badge">Vendedores</div>
+  </div>
+</header>
+
+<div class="wrapper">
+
+  <!-- INSTALL HINT -->
+  <div class="install-banner">
+    <div class="ib-icon">📱</div>
+    <div class="ib-text">
+      <div class="ib-title">Instalar como app en tu celular</div>
+      <div class="ib-desc">iPhone: Safari → Compartir → "Agregar a pantalla de inicio" &nbsp;|&nbsp; Android: Chrome → menú ⋮ → "Agregar a pantalla de inicio"</div>
+    </div>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Auto Convencional</div>
+
+      <div class="field">
+        <label>Tipo de combustible</label>
+        <div class="presets" id="fuelType">
+          <button class="preset-btn active" onclick="setFuel(this,'Gasolina')">⛽ Gasolina</button>
+          <button class="preset-btn" onclick="setFuel(this,'Diésel')">🛢️ Diésel</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Rendimiento</label>
+        <div class="input-wrap">
+          <input type="text" id="rendConv" value="10" placeholder="ej: 10,5">
+          <span class="input-suffix">km/lt</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Precio vehículo (opcional)</label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">$</span>
+          <input type="text" id="precioConv" placeholder="ej: 12.000.000">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Auto Híbrido</div>
+
+      <div class="field">
+        <label>Rendimiento (equiv.)</label>
+        <div class="input-wrap">
+          <input type="text" id="rendHib" value="23" placeholder="ej: 23,5">
+          <span class="input-suffix">km/lt</span>
+        </div>
+      </div>
+
+      <div class="field"><label>&nbsp;</label><div style="height:44px;"></div></div>
+
+      <div class="field">
+        <label>Precio vehículo (opcional)</label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">$</span>
+          <input type="text" id="precioHib" placeholder="ej: 17.000.000">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Parámetros de uso</div>
+    <div class="grid-2">
+
+      <div class="field">
+        <label>Kilometraje anual</label>
+        <div class="input-wrap">
+          <!-- text input allows decimals with comma: 15.500,5 -->
+          <input type="text" id="kmAnual" value="15.000" placeholder="ej: 15.500,5">
+          <span class="input-suffix">km</span>
+        </div>
+        <div class="presets">
+          <button class="preset-btn" onclick="setValText('kmAnual','10.000',this)">10.000</button>
+          <button class="preset-btn active" onclick="setValText('kmAnual','15.000',this)">15.000</button>
+          <button class="preset-btn" onclick="setValText('kmAnual','20.000',this)">20.000</button>
+          <button class="preset-btn" onclick="setValText('kmAnual','30.000',this)">30.000</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Precio combustible ($/litro)</label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">$</span>
+          <input type="text" id="precioComb" value="1.250"
+            oninput="syncSliderFromInput()">
+        </div>
+        <input type="range" id="rangeSlider" min="500" max="3000" value="1250" step="10"
+          oninput="syncInputFromSlider()">
+        <div class="presets">
+          <button class="preset-btn active" onclick="setValText('precioComb','1.250',this);document.getElementById('rangeSlider').value=1250;">$1.250</button>
+          <button class="preset-btn" onclick="setValText('precioComb','1.420',this);document.getElementById('rangeSlider').value=1420;">$1.420</button>
+          <button class="preset-btn" onclick="setValText('precioComb','1.620',this);document.getElementById('rangeSlider').value=1620;">$1.620</button>
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcular()">⚡ Calcular ahorro</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <hr class="divider">
+    <div class="results-header">🎯 Resultados del análisis</div>
+
+    <div class="savings-hero">
+      <div class="savings-label">Ahorro anual estimado en combustible</div>
+      <div class="savings-amount" id="heroSaving">$0</div>
+      <div class="savings-sub" id="heroSub">Cambiando a un auto híbrido</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card highlight">
+        <div class="stat-icon">💰</div>
+        <div class="stat-val" id="ahorroMes">$0</div>
+        <div class="stat-desc">Ahorro mensual</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💧</div>
+        <div class="stat-val" id="litrosAhorro">0 lt</div>
+        <div class="stat-desc">Litros ahorrados por año</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⛽</div>
+        <div class="stat-val" id="tanksSaved">0</div>
+        <div class="stat-desc">Tanques de 50L equiv.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Costo anual en combustible</div>
+      <div class="compare-row">
+        <div>
+          <div class="bar-label">
+            <span id="barLabelConv">Auto Convencional</span>
+            <span id="barValConv" style="color:var(--rojo);">$0</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill gasolina" id="barConv" style="width:100%"></div></div>
+        </div>
+        <div>
+          <div class="bar-label">
+            <span>Auto Híbrido</span>
+            <span id="barValHib" style="color:var(--verde);">$0</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill hibrido" id="barHib" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Proyección de ahorro acumulado</div>
+      <table class="proj-table">
+        <thead>
+          <tr><th>Período</th><th>Costo Conv.</th><th>Costo Híbrido</th><th>Ahorro total</th></tr>
+        </thead>
+        <tbody id="projBody"></tbody>
+      </table>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="card-title">Comparación de costos por año</div>
+      <canvas id="myChart" height="200"></canvas>
+    </div>
+
+    <div id="roiCard" class="roi-card" style="display:none;">
+      <div class="roi-icon">🏁</div>
+      <div>
+        <div class="roi-title">Punto de equilibrio (Break-even)</div>
+        <div class="roi-val" id="roiVal">—</div>
+        <div class="roi-desc" id="roiDesc"></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-secondary" onclick="window.print()">🖨️ Imprimir / PDF</button>
+      <button class="btn-secondary" id="copyBtn" onclick="compartir()">📋 Copiar resumen</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">
+      <img src="logo.jpg" alt="ONE Summit"
+        onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\'font-family:Barlow Condensed,sans-serif;font-weight:900;font-size:18px;color:#1A1A1A\'><span style=\'color:#D81E1E\'>ONE</span> Summit</div>')">
+    </div>
+    <span>Herramienta interna para vendedores · Valores estimativos según datos ingresados · onesummit.cl</span>
+  </footer>
+</div>
+
+<script>
+let chart = null;
+let currentFuel = 'Gasolina';
+
+/* ── helpers ── */
+function setFuel(btn, type) {
+  currentFuel = type;
+  document.querySelectorAll('#fuelType .preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function setValText(id, val, btn) {
+  document.getElementById(id).value = val;
+  if (btn) {
+    btn.parentElement.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+/* Parse Chilean number format: "15.500,5" → 15500.5 */
+function parseChilean(str) {
+  if (!str) return 0;
+  // Remove thousand separators (dots), replace comma decimal → dot
+  const clean = String(str).replace(/\./g, '').replace(',', '.');
+  return parseFloat(clean) || 0;
+}
+/* Format number Chilean style: 1234567.8 → "1.234.567,8" */
+function fmtCL(n, decimals = 0) {
+  return n.toLocaleString('es-CL', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+function fmtMoney(n) { return '$' + fmtCL(Math.round(n)); }
+
+function syncSliderFromInput() {
+  const v = parseChilean(document.getElementById('precioComb').value);
+  if (v >= 500 && v <= 3000) document.getElementById('rangeSlider').value = v;
+}
+function syncInputFromSlider() {
+  const v = document.getElementById('rangeSlider').value;
+  document.getElementById('precioComb').value = fmtCL(parseInt(v));
+}
+
+/* ── MAIN CALC ── */
+function calcular() {
+  const km         = parseChilean(document.getElementById('kmAnual').value)   || 15000;
+  const rConv      = parseChilean(document.getElementById('rendConv').value)  || 10;
+  const rHib       = parseChilean(document.getElementById('rendHib').value)   || 23;
+  const precio     = parseChilean(document.getElementById('precioComb').value)|| 1250;
+  const precioConv = parseChilean(document.getElementById('precioConv').value)|| 0;
+  const precioHib  = parseChilean(document.getElementById('precioHib').value) || 0;
+
+  if (rConv <= 0 || rHib <= 0 || precio <= 0 || km <= 0) {
+    alert('Por favor ingresa valores válidos en todos los campos obligatorios.');
+    return;
+  }
+
+  const litrosConv     = km / rConv;
+  const litrosHib      = km / rHib;
+  const costoConvAnual = litrosConv * precio;
+  const costoHibAnual  = litrosHib  * precio;
+  const ahorroAnual    = costoConvAnual - costoHibAnual;
+  const litrosAhorro   = litrosConv - litrosHib;
+
+  /* Hero */
+  document.getElementById('heroSaving').textContent = fmtMoney(ahorroAnual);
+  document.getElementById('heroSub').textContent    =
+    `Combustible ${currentFuel} · ${fmtCL(km, km % 1 ? 1 : 0)} km/año · $${fmtCL(precio)}/lt`;
+
+  /* Stats */
+  document.getElementById('ahorroMes').textContent    = fmtMoney(ahorroAnual / 12);
+  document.getElementById('litrosAhorro').textContent = fmtCL(litrosAhorro, 1) + ' lt';
+  document.getElementById('tanksSaved').textContent   = fmtCL(litrosAhorro / 50, 1) + ' tnq';
+
+  /* Bars */
+  document.getElementById('barLabelConv').textContent = `Convencional (${fmtCL(rConv,1)} km/lt)`;
+  document.getElementById('barValConv').textContent   = fmtMoney(costoConvAnual);
+  document.getElementById('barValHib').textContent    = fmtMoney(costoHibAnual);
+  setTimeout(() => {
+    document.getElementById('barConv').style.width = '100%';
+    document.getElementById('barHib').style.width  = (costoHibAnual / costoConvAnual * 100) + '%';
+  }, 120);
+
+  /* Table */
+  const anios = [1, 2, 3, 4, 5, 7, 10];
+  document.getElementById('projBody').innerHTML = anios.map(a =>
+    `<tr>
+      <td>${a} año${a > 1 ? 's' : ''}</td>
+      <td class="col-rojo">${fmtMoney(costoConvAnual * a)}</td>
+      <td>${fmtMoney(costoHibAnual * a)}</td>
+      <td class="col-verde">${fmtMoney(ahorroAnual * a)}</td>
+    </tr>`
+  ).join('');
+
+  /* Chart */
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('myChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Año 1','Año 2','Año 3','Año 4','Año 5','Año 7','Año 10'],
+      datasets: [
+        {
+          label: 'Costo Convencional',
+          data: anios.map(a => Math.round(costoConvAnual * a)),
+          backgroundColor: 'rgba(216,30,30,0.75)',
+          borderRadius: 6, borderSkipped: false,
+        },
+        {
+          label: 'Costo Híbrido',
+          data: anios.map(a => Math.round(costoHibAnual * a)),
+          backgroundColor: 'rgba(22,163,74,0.7)',
+          borderRadius: 6, borderSkipped: false,
+        },
+        {
+          label: 'Ahorro Acumulado',
+          data: anios.map(a => Math.round(ahorroAnual * a)),
+          type: 'line',
+          borderColor: '#1A1A1A',
+          backgroundColor: 'rgba(26,26,26,0.04)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#1A1A1A',
+          pointRadius: 4, tension: 0.4, fill: true,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#444', font: { family: 'Barlow', size: 12, weight: '600' } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.raw)}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#888', font: { family: 'Barlow', weight: '600' } }, grid: { color: '#f0f0f0' } },
+        y: {
+          ticks: {
+            color: '#888', font: { family: 'Barlow', weight: '600' },
+            callback: v => '$' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'K')
+          },
+          grid: { color: '#f0f0f0' }
+        }
+      }
+    }
+  });
+
+  /* ROI */
+  if (precioConv > 0 && precioHib > 0 && precioHib > precioConv) {
+    const diff     = precioHib - precioConv;
+    const yearsROI = diff / ahorroAnual;
+    document.getElementById('roiCard').style.display = 'flex';
+    document.getElementById('roiVal').textContent  =
+      yearsROI < 1 ? Math.round(yearsROI * 12) + ' meses' : yearsROI.toFixed(1) + ' años';
+    document.getElementById('roiDesc').textContent =
+      `Diferencia de precio: ${fmtMoney(diff)} · Desde ese punto, el híbrido genera ahorro neto.`;
+  } else {
+    document.getElementById('roiCard').style.display = 'none';
+  }
+
+  /* Show */
+  const res = document.getElementById('results');
+  res.style.display = 'block';
+  res.classList.remove('visible');
+  setTimeout(() => res.classList.add('visible'), 10);
+  setTimeout(() => res.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+/* ── COPY SUMMARY ── */
+function compartir() {
+  const km     = parseChilean(document.getElementById('kmAnual').value);
+  const rConv  = parseChilean(document.getElementById('rendConv').value);
+  const rHib   = parseChilean(document.getElementById('rendHib').value);
+  const precio = parseChilean(document.getElementById('precioComb').value);
+  const ahorroAnual = (km/rConv - km/rHib) * precio;
+
+  const texto =
+`🚗 CALCULADORA DE AHORRO HÍBRIDO · ONE Summit
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 Supuestos utilizados:
+• Kilometraje anual:           ${fmtCL(km, km%1?1:0)} km
+• Rendimiento convencional:    ${fmtCL(rConv,1)} km/lt
+• Rendimiento híbrido:         ${fmtCL(rHib,1)} km/lt
+• Precio combustible:          $${fmtCL(precio)}/lt
+
+💰 AHORRO ANUAL:    ${fmtMoney(ahorroAnual)}
+📅 Ahorro mensual:  ${fmtMoney(ahorroAnual/12)}
+📆 Ahorro 3 años:   ${fmtMoney(ahorroAnual*3)}
+📆 Ahorro 5 años:   ${fmtMoney(ahorroAnual*5)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+onesummit.cl`;
+
+  navigator.clipboard.writeText(texto)
+    .then(() => {
+      const b = document.getElementById('copyBtn');
+      b.textContent = '✅ ¡Copiado!';
+      setTimeout(() => b.textContent = '📋 Copiar resumen', 2500);
+    })
+    .catch(() => alert(texto));
+}
+</script>
+
+<script>
+(function(){
+  const el = document.getElementById('precio');
+  if(!el) return;
+  el.setAttribute('type','text');
+  function formatCLP(n){ if(!n) return ''; return Number(n).toLocaleString('es-CL'); }
+  el.addEventListener('input', function(e){
+    let raw = e.target.value.replace(/\D/g,'');
+    if(raw===''){ e.target.value=''; return; }
+    e.target.value = formatCLP(raw);
+  });
+  window.getPrecioNumero = function(){
+    const v = (document.getElementById('precio').value||'').replace(/\./g,'');
+    return v ? parseInt(v,10) : 0;
+  };
+})();
+</script>
+
+</body>
+</html>
